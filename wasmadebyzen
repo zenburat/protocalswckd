@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WCKD PROTOCOL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #050505;
+        --surface: #0a0a0c;
+        --text-main: #f0f0f0;
+        --text-muted: #88888b;
+        --accent: #b30000;
+        --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        cursor: crosshair;
+    }
+
+    body {
+        background-color: var(--bg);
+        color: var(--text-main);
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+        min-height: 100vh;
+        background-image: radial-gradient(circle at 50% 0%, #1a0f0f 0%, transparent 50%);
+    }
+
+    /* CRT Scanline Effect */
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    /* Nav */
+    nav {
+        position: fixed;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 1200px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: rgba(10, 10, 12, 0.6);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 100;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.8rem;
+        letter-spacing: 0.1em;
+    }
+
+    .brand {
+        font-family: 'Cinzel', serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .brand::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent);
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 2rem;
+    }
+
+    .nav-links a {
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.3s;
+        text-transform: uppercase;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+        color: var(--text-main);
+    }
+
+    /* Main Hero */
+    .hero {
+        position: relative;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        z-index: 10;
+        padding: 0 2rem;
+    }
+
+    /* Interactive Spotlight Container */
+    .spotlight-container {
+        position: relative;
+        width: 100%;
+        max-width: 900px;
+        padding: 4rem 2rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        overflow: hidden;
+    }
+
+    /* The Grid Background */
+    .spotlight-container::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: 
+            linear-gradient(var(--border) 1px, transparent 1px),
+            linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 40px 40px;
+        opacity: 0.3;
+        z-index: 0;
+    }
+
+    /* The Mask that follows the mouse */
+    .spotlight-mask {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+            circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+            rgba(179, 0, 0, 0.15) 0%,
+            transparent 100%
+        );
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    /* Additional glowing dot that follows the mouse exactly */
+    .spotlight-dot {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--accent);
+        border-radius: 50%;
+        box-shadow: 0 0 15px 4px rgba(179, 0, 0, 0.4);
+        transform: translate(-50%, -50%);
+        left: var(--mouse-x, 50%);
+        top: var(--mouse-y, 50%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    /* Container for the GIF slideshow */
+    .gif-container {
+        position: relative;
+        width: 100%; 
+        max-width: 600px;
+        height: 350px;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        background: rgba(0,0,0,0.5);
+        box-shadow: 0 0 30px rgba(0,0,0,0.8) inset;
+    }
+
+    /* Hide all GIFs by default */
+    .hero-gif {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        filter: drop-shadow(0 0 20px rgba(255,255,255,0.1));
+    }
+
+    /* The active class makes the GIF visible */
+    .hero-gif.active {
+        opacity: 1;
+    }
+
+    .hero-logo {
+        font-family: 'Cinzel', serif;
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 1rem;
+        line-height: 1.1;
+        text-shadow: 0 0 20px rgba(255,255,255,0.1);
+    }
+
+    .hero-logo span {
+        color: var(--accent);
+        display: block;
+        font-size: 0.2em;
+        letter-spacing: 0.3em;
+        margin-top: 1rem;
+        font-family: 'Space Mono', monospace;
+    }
+
+    .hero-text {
+        font-family: 'Space Mono', monospace;
+        font-size: clamp(0.8rem, 1.5vw, 1rem);
+        line-height: 1.8;
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .hero-text strong {
+        color: var(--text-main);
+        font-weight: 600;
+    }
+</style>
+</head>
+<body>
+
+    <audio id="bg-music" loop autoplay>
+        <source src="https://cdn.discordapp.com/attachments/1563757710334365786/1569334493494640680/Dynoro_-_In_My_Mind_hoodtrap_remix_by._MOULS.mp3?ex=6af5b724&is=6af465a4&hm=422f4b11629cd5ff5807a4af9703b54b62951e502b1ff54ac95adaa4c34135c1&" type="audio/mpeg">
+    </audio>
+
+    <nav>
+        <div class="brand">WCKD</div>
+        <div class="nav-links">
+            <a href="#" class="active">Home</a>
+        </div>
+    </nav>
+
+    <main class="hero" id="hero-section">
+        <div class="spotlight-container" id="spotlight-area">
+            <div class="spotlight-mask" id="spotlight-mask"></div>
+            <div class="spotlight-dot" id="spotlight-dot"></div>
+            
+            <div class="hero-content">
+                
+                <!-- GIF SLIDESHOW CONTAINER -->
+                <div class="gif-container">
+                    <!-- GIF 1 -->
+                    <img src="https://media.discordapp.net/attachments/1566111091585716384/1570146098146836635/3AF8080D-7624-4A91-8F6E-74D374EDFD18.gif?ex=6af60801&is=6af4b681&hm=fbceeb21ce6711e7741a69e1c1e46f198cdcec30c2693f24518e7bfbb28b2eec&=" class="hero-gif active" alt="GIF 1">
+                    
+                    <!-- GIF 2 -->
+                    <img src="https://media.discordapp.net/attachments/1566111091585716384/1570146098817794068/E5062C37-C72E-4B46-A3ED-6ED81BFC08FF.gif?ex=6af60801&is=6af4b681&hm=e774dd6e03fd8290631753481e7d1d7e80d756b79d9d4b972dc41a1b3a0be25c&=" class="hero-gif" alt="GIF 2">
+                    
+                    <!-- GIF 3 -->
+                    <img src="https://media.discordapp.net/attachments/1566111091585716384/1570146098440577116/DCFF44DA-0BEF-4355-B0B4-65656CAF1DFD.gif?ex=6af60801&is=6af4b681&hm=217d6b591af658a1878b5c2707dfbaa0c96f6cadf8ce360adabaf2cc2823da38&=" class="hero-gif" alt="GIF 3">
+                </div>
+
+                <h1 class="hero-logo">
+                    WCKD PROTOCOL<br>
+                    <span>NOT OFFICIAL WEBSITE, DUMP</span>
+                </h1>
+                <p class="hero-text">
+                    We don't leave footprints. We erase the ground. <br><br>
+                    <strong>Zero latency. Absolute deniability.</strong> The grid is compromised. This terminal is the only dead zone left. If you're reading this, you're either a ghost or a target.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- GIF Slideshow Logic ---
+        const gifs = document.querySelectorAll('.hero-gif');
+        let currentGifIndex = 0;
+
+        setInterval(() => {
+            gifs[currentGifIndex].classList.remove('active');
+            currentGifIndex = (currentGifIndex + 1) % gifs.length;
+            gifs[currentGifIndex].classList.add('active');
+        }, 4000); // Changes GIF every 4 seconds
+
+        // --- Audio Logic ---
+        const bgMusic = document.getElementById('bg-music');
+        let isPlaying = false;
+
+        bgMusic.volume = 0.4;
+        bgMusic.play().then(() => {
+            isPlaying = true;
+        }).catch(err => {
+            console.log("Autoplay blocked, waiting for click.");
+        });
+
+        document.addEventListener('click', () => {
+            if (!isPlaying && bgMusic) {
+                bgMusic.play().then(() => {
+                    isPlaying = true;
+                }).catch(err => console.log("Audio play failed:", err));
+            }
+        }, { once: true });
+
+        // --- Spotlight/Tilt Logic ---
+        const spotlightArea = document.getElementById('spotlight-area');
+        
+        spotlightArea.addEventListener('mousemove', (e) => {
+            const rect = spotlightArea.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            spotlightArea.style.setProperty('--mouse-x', `${x}px`);
+            spotlightArea.style.setProperty('--mouse-y', `${y}px`);
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+
+            spotlightArea.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            spotlightArea.style.transition = 'none';
+        });
+
+        spotlightArea.addEventListener('mouseleave', () => {
+            spotlightArea.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+            spotlightArea.style.transition = 'transform 0.5s ease, box-shadow 0.5s ease';
+            
+            spotlightArea.style.setProperty('--mouse-x', `-500px`);
+            spotlightArea.style.setProperty('--mouse-y', `-500px`);
+        });
+
+        spotlightArea.addEventListener('mouseenter', () => {
+            spotlightArea.style.transition = 'transform 0.1s ease-out';
+        });
+    </script>
+</body>
+</html>
